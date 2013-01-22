@@ -12,7 +12,8 @@ import java.util.Iterator;
  * 
  * @see picture.Utils PictureTool
  */
-public class Picture implements Iterator<Picture.Pixel>, Iterable<Picture.Pixel> {
+public class Picture implements Iterator<Picture.Pixel>, Iterable<Picture.Pixel>
+{
 
     public class Pixel {
         public final int x, y;
@@ -171,14 +172,41 @@ public class Picture implements Iterator<Picture.Pixel>, Iterable<Picture.Pixel>
     }
 
 
+    /* Gets the color values of a group of pixels (tile) */
+    public Color[] getTile(int startX, int startY, int tileSize) {
+        Color[] colors = new Color[tileSize * tileSize];
+        int i = 0;
+        for (int x = startX; x < startX + tileSize; x++) {
+            for (int y = startY; y < startY + tileSize; y++) {
+                colors[i] = getPixel(x, y);
+                i++;
+            }
+        }
+        return colors;
+    }
+
+    /* Sets the color values of a group of pixels (tile) */
+    public void setTile(int startX, int startY, int tileSize, Color[] colors) {
+        int i = 0;
+        for (int x = startX; x < startX + tileSize; x++) {
+            for (int y = startY; y < startY + tileSize; y++) {
+                setPixel(x, y, colors[i]);
+                i++;
+            }
+        }
+    }
+
+    /* Iterable Methods */
     public Iterator<Pixel> iterator() {
         currentPixel = new Pixel(-1, 0, null);
         return this;
     }
 
+    /* Iterator Methods */
     @Override
     public boolean hasNext() {
-        return !((currentPixel.x == getWidth() - 1) && (currentPixel.y == getHeight() - 1));
+        return !((currentPixel.x == getWidth() - 1) &&
+                 (currentPixel.y == getHeight() - 1));
     }
 
     @Override

@@ -14,7 +14,8 @@ public class Process {
         ROTATE,
         FLIP,
         BLUR,
-        BLEND
+        BLEND,
+        MOSAIC
     }
 
     public enum Angle {
@@ -26,7 +27,8 @@ public class Process {
     }
 
     public static Picture invert(Picture picture) {
-        Picture newPicture = Utils.createPicture(picture.getWidth(), picture.getHeight());
+        Picture newPicture = Utils.createPicture(picture.getWidth(), 
+            picture.getHeight());
 
         for (Pixel pixel : picture) {
             pixel.color.invert();
@@ -37,7 +39,8 @@ public class Process {
     }
 
     public static Picture grayscale(Picture picture) {
-        Picture newPicture = Utils.createPicture(picture.getWidth(), picture.getHeight());
+        Picture newPicture = Utils.createPicture(picture.getWidth(), 
+            picture.getHeight());
 
         for (Pixel pixel : picture) {
             pixel.color.normalise();
@@ -50,9 +53,11 @@ public class Process {
     public static Picture rotate(Picture picture, Angle angle) {
         Picture newPicture;
         if (angle == Angle._180) {
-            newPicture = Utils.createPicture(picture.getWidth(), picture.getHeight());
+            newPicture = Utils.createPicture(picture.getWidth(), 
+                picture.getHeight());
         } else {
-            newPicture = Utils.createPicture(picture.getHeight(), picture.getWidth());
+            newPicture = Utils.createPicture(picture.getHeight(), 
+                picture.getWidth());
         }
 
         int width = picture.getWidth() - 1;
@@ -61,13 +66,16 @@ public class Process {
         for (Pixel pixel : picture) {
             switch (angle) {
                 case _90:
-                    newPicture.setPixel(height - pixel.y, pixel.x, pixel.color);
+                    newPicture.setPixel(height - pixel.y, pixel.x, 
+                        pixel.color);
                     break;
                 case _180:
-                    newPicture.setPixel(width - pixel.x, height - pixel.y, pixel.color);
+                    newPicture.setPixel(width - pixel.x, height - pixel.y, 
+                        pixel.color);
                     break;
                 case _270:
-                    newPicture.setPixel(pixel.y, width - pixel.x, pixel.color);
+                    newPicture.setPixel(pixel.y, width - pixel.x, 
+                        pixel.color);
                     break;
                 default: break;
             }
@@ -77,7 +85,8 @@ public class Process {
     }
 
     public static Picture flip(Picture picture, Direction direction) {
-        Picture newPicture = Utils.createPicture(picture.getWidth(), picture.getHeight());
+        Picture newPicture = Utils.createPicture(picture.getWidth(), 
+            picture.getHeight());
 
         int width = picture.getWidth() - 1;
         int height = picture.getHeight() - 1;
@@ -98,7 +107,8 @@ public class Process {
     }
 
     public static Picture blur(Picture picture) {
-        Picture newPicture = Utils.createPicture(picture.getWidth(), picture.getHeight());
+        Picture newPicture = Utils.createPicture(picture.getWidth(), 
+            picture.getHeight());
 
         for (Pixel pixel : picture) {
             boolean hasNeighbours = pixel.x > 0 && 
@@ -107,7 +117,8 @@ public class Process {
                                     pixel.y < picture.getHeight() - 1;
 
             if (hasNeighbours) {
-                newPicture.setPixel(pixel.x, pixel.y, averageNeighbours(picture, pixel.x, pixel.y));
+                newPicture.setPixel(pixel.x, pixel.y, 
+                    averageNeighbours(picture, pixel.x, pixel.y));
             } else {
                 newPicture.setPixel(pixel.x, pixel.y, pixel.color);
             }
@@ -117,7 +128,8 @@ public class Process {
     }
 
     public static Picture blend(Picture[] pictures) {
-        Tuple<Integer, Integer> smallestDimensions = getSmallestDimensions(pictures);
+        Tuple<Integer, Integer> smallestDimensions = 
+            getSmallestDimensions(pictures);
 
         Picture newPicture = Utils.createPicture(
             smallestDimensions.getX(), smallestDimensions.getY());
@@ -128,6 +140,38 @@ public class Process {
                 colors[i] = pictures[i].getPixel(pixel.x, pixel.y);
             }
             newPicture.setPixel(pixel.x, pixel.y, averageColors(colors));
+        }
+
+        return newPicture;
+    }
+
+    public static Picture mosaic(int tileSize, Picture[] pictures) {
+        Tuple<Integer, Integer> smallestDimensions =
+            getSmallestDimensions(pictures);
+
+        // This makes the dimension divisible by tileSize
+        int width = (int) (smallestDimensions.getX() / tileSize) * tileSize;
+        int height = (int) (smallestDimensions.getY() / tileSize) * tileSize; 
+
+        Picture newPicture = Utils.createPicture(width, height);
+
+        int pictureIndex;
+        int startingPictureIndex = 0;
+        for (int x = 0; x <= width - tileSize; x += tileSize) {
+            pictureIndex = startingPictureIndex;
+
+            startingPictureIndex++;
+            if (startingPictureIndex >= pictures.length)
+                startingPictureIndex = 0;
+
+            for (int y = 0; y <= height - tileSize; y += tileSize) {
+                Color[] colors = pictures[pictureIndex].getTile(x, y, tileSize);
+                newPicture.setTile(x, y, tileSize, colors);
+
+            pictureIndex++;
+            if (pictureIndex >= pictures.length)
+                pictureIndex = 0;
+            }
         }
 
         return newPicture;
@@ -155,17 +199,20 @@ public class Process {
             blue += color.getBlue();
         }
 
-        return new Color(red / colors.length, green / colors.length, blue / colors.length);
+        return new Color(red / colors.length, green / colors.length, 
+                         blue / colors.length);
     }
 
-    private static Tuple<Integer, Integer> getSmallestDimensions(Picture[] pictures) {
-        int smallestWidth = -1;
-        int smallestHeight = -1;
+    private static Tuple<Integer, Integer> getSmallestDimensions(
+        Picture[] pictures) 
+    {
+        int smallestWidth = Integer.MAX_VALUE;
+        int smallestHeight = Integer.MAX_VALUE;
 
         for (Picture picture : pictures) {
-            if (picture.getWidth() > smallestWidth)
+            if (picture.getWidth() < smallestWidth)
                 smallestWidth = picture.getWidth();
-            if (picture.getHeight() > smallestHeight)
+            if (picture.getHeight() < smallestHeight)
                 smallestHeight = picture.getHeight();
         }
 
