@@ -15,9 +15,8 @@ import java.util.Iterator;
 public class Picture implements Iterator<Picture.Pixel>, Iterable<Picture.Pixel> {
 
     public class Pixel {
-        public int x;
-        public int y;
-        public Color color;
+        public final int x, y;
+        public final Color color;
 
         public Pixel(int x, int y, Color color) {
             this.x = x;
@@ -184,14 +183,14 @@ public class Picture implements Iterator<Picture.Pixel>, Iterable<Picture.Pixel>
 
     @Override
     public Pixel next() {
+        int x = currentPixel.x + 1;
+        int y = currentPixel.y;
         if (currentPixel.x == getWidth() - 1) {
-            currentPixel.x = 0;
-            currentPixel.y++;
-        } else {
-            currentPixel.x++;
+            x = 0;
+            y++;
         }
 
-        currentPixel.color = getPixel(currentPixel.x, currentPixel.y);
+        currentPixel = new Pixel(x, y, getPixel(x, y));
         return currentPixel;
     }
 

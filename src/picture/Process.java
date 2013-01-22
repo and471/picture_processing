@@ -3,6 +3,7 @@ package picture;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Method;
 import picture.Picture.Pixel;
+import utils.Tuple;
 
 
 public class Process {
@@ -12,7 +13,8 @@ public class Process {
         GRAYSCALE,
         ROTATE,
         FLIP,
-        BLUR
+        BLUR,
+        BLEND
     }
 
     public enum Angle {
@@ -59,13 +61,13 @@ public class Process {
         for (Pixel pixel : picture) {
             switch (angle) {
                 case _90:
-                    newPicture.setPixel(pixel.y, width - pixel.x, pixel.color);
+                    newPicture.setPixel(height - pixel.y, pixel.x, pixel.color);
                     break;
                 case _180:
                     newPicture.setPixel(width - pixel.x, height - pixel.y, pixel.color);
                     break;
                 case _270:
-                    newPicture.setPixel(height - pixel.y, pixel.x, pixel.color);
+                    newPicture.setPixel(pixel.y, width - pixel.x, pixel.color);
                     break;
                 default: break;
             }
@@ -114,20 +116,60 @@ public class Process {
         return newPicture;
     }
 
+    public static Picture blend(Picture[] pictures) {
+        Tuple<Integer, Integer> smallestDimensions = getSmallestDimensions(pictures);
+
+        Picture newPicture = Utils.createPicture(
+            smallestDimensions.getX(), smallestDimensions.getY());
+
+        for (Pixel pixel : newPicture) {
+            Color[] colors = new Color[pictures.length];
+            for (int i = 0; i < pictures.length; i++) {
+                colors[i] = pictures[i].getPixel(pixel.x, pixel.y);
+            }
+            newPicture.setPixel(pixel.x, pixel.y, averageColors(colors));
+        }
+
+        return newPicture;
+    }
+
     private static Color averageNeighbours(Picture picture, int x, int y) {
-        int red = 0;
-        int green = 0;
-        int blue = 0;
+        Color[] colors = new Color[9];
+        int i = 0;
 
         for (int x_ = x - 1; x_ <= x + 1; x_++) {
             for (int y_ = y - 1; y_ <= y + 1; y_++) {
-                Color color = picture.getPixel(x_, y_);
-                red += color.getRed();
-                green += color.getGreen();
-                blue += color.getBlue();
+                colors[i] = picture.getPixel(x_, y_);
+                i++;
             }
         }
-        return new Color(red / 9, green / 9, blue / 9);
+        return averageColors(colors);
+    }
+
+    private static Color averageColors(Color[] colors) {
+        int red = 0, green = 0, blue = 0;
+
+        for (Color color : colors) {
+            red += color.getRed();
+            green += color.getGreen();
+            blue += color.getBlue();
+        }
+
+        return new Color(red / colors.length, green / colors.length, blue / colors.length);
+    }
+
+    private static Tuple<Integer, Integer> getSmallestDimensions(Picture[] pictures) {
+        int smallestWidth = -1;
+        int smallestHeight = -1;
+
+        for (Picture picture : pictures) {
+            if (picture.getWidth() > smallestWidth)
+                smallestWidth = picture.getWidth();
+            if (picture.getHeight() > smallestHeight)
+                smallestHeight = picture.getHeight();
+        }
+
+        return new Tuple<Integer, Integer>(smallestWidth, smallestHeight);
     }
 
 }

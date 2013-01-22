@@ -41,6 +41,13 @@ public class Main {
                 case BLUR:
                     transformedPicture = Process.blur(picture);
                     break;
+                case BLEND:
+                    Picture[] pictures = new Picture[args.length - 2];
+                    for (int i = 1; i < args.length - 1; i++) {
+                        pictures[i-1] = Utils.loadPicture(args[i]);
+                    }
+                    transformedPicture = Process.blend(pictures);
+                    break;
                 default: break;
             }
 
