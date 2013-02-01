@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 public class Main {
 
+    // Forgot to actually use these :/
     public static final String NOT_ENOUGH_ARGS = 
         "You did not give a valid input. Input should be of the form:\n" +
         "<transformation> <arguments> <image(s) to load> <image to save>";
